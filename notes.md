@@ -334,6 +334,117 @@ public class RabbitMQConstants {
 ```
 
 ## Vídeo #4: Enviando mensagens ao RabbitMQ utilizando Java e Spring Boot
+
+Nesse vídeo vamos criar nossa API de estoque-preço e, assim que recebermos as requisições através da nossa API, vamos enviar as mensagens ao RabbitMQ.
+
+Vamos criar duas classes chamadas ```EstoqueDTO``` e ```PrecoDTO``` dentro do pacote ```dto```.
+
+Vamos criar duas classes chamadas ```EstoqueController``` e ```PrecoController``` dentro do pacote ```controller```.
+
+Vamos criar uma classe chamada ```RabbitMQService``` dentro do pacote ```service```.
+
+Veja os códigos:
+
+```java
+package com.example.estoquepreco.dto;
+
+import java.io.Serializable;
+
+public class EstoqueDTO implements Serializable {
+    public String codigoProduto;
+    public int quantidade;
+}
+```
+```java
+package com.example.estoquepreco.dto;
+
+import java.io.Serializable;
+
+public class PrecoDTO implements Serializable {
+    public String codigoProduto;
+    public Double preco;
+}
+```
+```java
+package com.example.estoquepreco.controller;
+
+import com.example.estoquepreco.constants.RabbitMQConstants;
+import com.example.estoquepreco.dto.EstoqueDTO;
+import com.example.estoquepreco.service.RabbitMQService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping(value = "estoque")
+public class EstoqueController {
+
+    @Autowired
+    private RabbitMQService rabbitMQService;
+
+    @PutMapping
+    private ResponseEntity alteraEstoque(@RequestBody EstoqueDTO estoqueDTO) {
+        System.out.println(estoqueDTO.codigoProduto);
+
+        rabbitMQService.enviaMensagem(RabbitMQConstants.FILA_ESTOQUE, estoqueDTO);
+        return new ResponseEntity(HttpStatus.OK);
+    }
+}
+```
+```java
+package com.example.estoquepreco.controller;
+
+import com.example.estoquepreco.constants.RabbitMQConstants;
+import com.example.estoquepreco.dto.EstoqueDTO;
+import com.example.estoquepreco.dto.PrecoDTO;
+import com.example.estoquepreco.service.RabbitMQService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping(value = "preco")
+public class PrecoController {
+
+    @Autowired
+    RabbitMQService rabbitMQService;
+
+    @PutMapping
+    private ResponseEntity alteraPreco(@RequestBody PrecoDTO precoDTO) {
+        System.out.println(precoDTO.preco);
+
+        rabbitMQService.enviaMensagem(RabbitMQConstants.FILA_PRECO, precoDTO);
+        return new ResponseEntity(HttpStatus.OK);
+    }
+}
+```
+```java
+package com.example.estoquepreco.service;
+
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public class RabbitMQService {
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    public void enviaMensagem(String nomeFila, Object mensagem) {
+        rabbitTemplate.convertAndSend(nomeFila, mensagem);
+    }
+}
+```
+
 ## Vídeo #5: Consumindo mensagens do RabbitMQ utilizando Java e Spring Boot
 ## Vídeo #6: Consumindo mensagens do RabbitMQ utilizando Node.js
 ## Vídeo #7: *Prefetch count* com RabbitMQ e Java e Spring Boot | Aprenda como realizar a configuração
